@@ -558,6 +558,150 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== Initialize =====
     updateExportButtons(false);
 
+    // ===== Example Data Controls =====
+    document.getElementById('clear-example-btn').addEventListener('click', () => {
+        clearAllData();
+        document.getElementById('example-banner').classList.add('hidden');
+    });
+
+    document.getElementById('reload-example-btn').addEventListener('click', () => {
+        clearAllData();
+        loadExampleData();
+        document.getElementById('example-banner').classList.remove('hidden');
+    });
+
+    function clearAllData() {
+        dataManager.clearAll();
+
+        // Reset chart config
+        chart.updateConfig({
+            title: '',
+            binSize: 'day',
+            stratifyBy: 'none',
+            showFirstCase: false,
+            exposure: null,
+            interventions: [],
+            incubation: null
+        });
+
+        // Reset UI controls
+        document.getElementById('bin-size').value = 'day';
+        document.getElementById('stratify-by').value = 'none';
+        document.getElementById('chart-title').value = '';
+        document.getElementById('show-first-case').checked = false;
+
+        document.getElementById('show-exposure').checked = false;
+        document.getElementById('exposure-fields').style.display = 'none';
+        document.getElementById('exposure-date').value = '';
+        document.getElementById('exposure-time').value = '';
+        document.getElementById('exposure-label').value = '';
+
+        document.getElementById('show-interventions').checked = false;
+        document.getElementById('intervention-fields').style.display = 'none';
+        document.getElementById('intervention-list').innerHTML = '';
+
+        document.getElementById('show-incubation').checked = false;
+        document.getElementById('incubation-fields').style.display = 'none';
+        document.getElementById('pathogen-select').value = '';
+        document.getElementById('incubation-min').value = '';
+        document.getElementById('incubation-max').value = '';
+        document.getElementById('suggested-bin').textContent = '-';
+
+        chart.render();
+    }
+
+    // ===== Load Example Data =====
+    loadExampleData();
+
+    function loadExampleData() {
+        // Example: Wedding reception foodborne outbreak (Salmonella)
+        // Classic point-source outbreak scenario for training
+        const exampleCases = [
+            // Day 1 - First cases (exposure was evening of Jan 14)
+            { onsetDate: '2024-01-15', onsetTime: '14:00', classification: 'confirmed', age: 34, sex: 'female', outcome: 'alive', custom: 'Bride family' },
+            { onsetDate: '2024-01-15', onsetTime: '16:30', classification: 'confirmed', age: 42, sex: 'male', outcome: 'alive', custom: 'Groom family' },
+            { onsetDate: '2024-01-15', onsetTime: '18:00', classification: 'confirmed', age: 28, sex: 'female', outcome: 'alive', custom: 'Bride family' },
+            { onsetDate: '2024-01-15', onsetTime: '19:00', classification: 'probable', age: 67, sex: 'male', outcome: 'alive', custom: 'Groom family' },
+            { onsetDate: '2024-01-15', onsetTime: '21:00', classification: 'confirmed', age: 31, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-15', onsetTime: '22:00', classification: 'confirmed', age: 45, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-15', onsetTime: '23:30', classification: 'confirmed', age: 52, sex: 'female', outcome: 'alive', custom: 'Guest' },
+
+            // Day 2 - Peak of outbreak
+            { onsetDate: '2024-01-16', onsetTime: '01:00', classification: 'confirmed', age: 38, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '02:30', classification: 'confirmed', age: 29, sex: 'female', outcome: 'alive', custom: 'Bride family' },
+            { onsetDate: '2024-01-16', onsetTime: '04:00', classification: 'confirmed', age: 61, sex: 'male', outcome: 'alive', custom: 'Groom family' },
+            { onsetDate: '2024-01-16', onsetTime: '05:00', classification: 'probable', age: 55, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '06:00', classification: 'confirmed', age: 33, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '07:30', classification: 'confirmed', age: 47, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '08:00', classification: 'confirmed', age: 26, sex: 'male', outcome: 'alive', custom: 'Bride family' },
+            { onsetDate: '2024-01-16', onsetTime: '09:00', classification: 'confirmed', age: 71, sex: 'female', outcome: 'deceased', custom: 'Groom family' },
+            { onsetDate: '2024-01-16', onsetTime: '10:00', classification: 'confirmed', age: 39, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '11:30', classification: 'probable', age: 44, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '13:00', classification: 'confirmed', age: 36, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '14:00', classification: 'confirmed', age: 58, sex: 'female', outcome: 'alive', custom: 'Bride family' },
+            { onsetDate: '2024-01-16', onsetTime: '16:00', classification: 'confirmed', age: 41, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '18:00', classification: 'suspected', age: 23, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-16', onsetTime: '20:00', classification: 'confirmed', age: 49, sex: 'male', outcome: 'alive', custom: 'Groom family' },
+
+            // Day 3 - Declining
+            { onsetDate: '2024-01-17', onsetTime: '02:00', classification: 'confirmed', age: 63, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-17', onsetTime: '08:00', classification: 'probable', age: 35, sex: 'male', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-17', onsetTime: '14:00', classification: 'confirmed', age: 27, sex: 'female', outcome: 'alive', custom: 'Bride family' },
+            { onsetDate: '2024-01-17', onsetTime: '22:00', classification: 'suspected', age: 54, sex: 'male', outcome: 'alive', custom: 'Guest' },
+
+            // Day 4 - Tail
+            { onsetDate: '2024-01-18', onsetTime: '10:00', classification: 'confirmed', age: 46, sex: 'female', outcome: 'alive', custom: 'Guest' },
+            { onsetDate: '2024-01-18', onsetTime: '18:00', classification: 'suspected', age: 32, sex: 'male', outcome: 'alive', custom: 'Groom family' }
+        ];
+
+        // Add example cases
+        exampleCases.forEach(c => dataManager.addCase(c));
+
+        // Set up example chart configuration
+        chart.updateConfig({
+            title: 'Example: Wedding Reception Outbreak (Salmonella)',
+            binSize: '6hour',
+            stratifyBy: 'classification',
+            showFirstCase: true
+        });
+
+        // Set bin size dropdown
+        document.getElementById('bin-size').value = '6hour';
+        document.getElementById('stratify-by').value = 'classification';
+        document.getElementById('chart-title').value = 'Example: Wedding Reception Outbreak (Salmonella)';
+        document.getElementById('show-first-case').checked = true;
+
+        // Set up exposure annotation
+        document.getElementById('show-exposure').checked = true;
+        document.getElementById('exposure-fields').style.display = 'block';
+        document.getElementById('exposure-date').value = '2024-01-14';
+        document.getElementById('exposure-time').value = '19:00';
+        document.getElementById('exposure-label').value = 'Wedding reception dinner';
+
+        chart.updateConfig({
+            exposure: {
+                date: '2024-01-14',
+                time: '19:00',
+                label: 'Wedding reception dinner'
+            }
+        });
+
+        // Set up incubation period (Salmonella)
+        document.getElementById('show-incubation').checked = true;
+        document.getElementById('incubation-fields').style.display = 'block';
+        document.getElementById('pathogen-select').value = 'salmonella';
+        document.getElementById('incubation-min').value = '6';
+        document.getElementById('incubation-max').value = '72';
+        document.getElementById('suggested-bin').textContent = 'Hourly';
+
+        chart.updateConfig({
+            incubation: { min: 6, max: 72 }
+        });
+
+        // Render the chart
+        chart.render();
+    }
+
     // Log initialization
-    console.log('Epi Curve Builder initialized');
+    console.log('Epi Curve Builder initialized with example data');
 });
