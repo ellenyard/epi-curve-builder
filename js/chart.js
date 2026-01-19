@@ -215,8 +215,14 @@ class EpiCurveChart {
         d3.select(`#${this.svgId}`).selectAll('*').remove();
 
         const containerRect = container.getBoundingClientRect();
-        const width = containerRect.width - this.margin.left - this.margin.right - 48; // padding
+        let width = containerRect.width - this.margin.left - this.margin.right - 48; // padding
         const height = 400 - this.margin.top - this.margin.bottom;
+
+        // If container width is not available yet, use a default and re-render later
+        if (width <= 0) {
+            width = 600; // Fallback width
+            requestAnimationFrame(() => this.render());
+        }
 
         // Create SVG
         this.svg = d3.select(`#${this.svgId}`)

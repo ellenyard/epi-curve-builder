@@ -611,9 +611,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ===== Load Example Data =====
-    loadExampleData();
+    // Use requestAnimationFrame to ensure DOM is fully rendered before loading example
+    requestAnimationFrame(() => {
+        loadExampleData();
+    });
 
     function loadExampleData() {
+        // Check if D3 is loaded
+        if (typeof d3 === 'undefined') {
+            console.error('D3 not loaded yet, retrying...');
+            setTimeout(loadExampleData, 100);
+            return;
+        }
+
         // Example: Wedding reception foodborne outbreak (Salmonella)
         // Classic point-source outbreak scenario for training
         const exampleCases = [
