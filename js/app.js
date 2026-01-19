@@ -617,15 +617,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function loadExampleData() {
-        console.log('loadExampleData called');
-
         // Check if D3 is loaded
         if (typeof d3 === 'undefined') {
-            console.error('D3 not loaded yet, retrying...');
             setTimeout(loadExampleData, 100);
             return;
         }
-        console.log('D3 is loaded:', d3.version);
 
         // Example: Wedding reception foodborne outbreak (Salmonella)
         // Classic point-source outbreak scenario for training
@@ -668,9 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         // Add example cases
-        console.log('Adding', exampleCases.length, 'example cases');
         exampleCases.forEach(c => dataManager.addCase(c));
-        console.log('Cases added, dataManager count:', dataManager.getCount());
 
         // Set up example chart configuration
         chart.updateConfig({

@@ -214,14 +214,11 @@ class EpiCurveChart {
 
     // Render the chart
     render() {
-        console.log('render() called, data length:', this.data.length);
-
         const container = document.getElementById(this.containerId);
         const svgElement = document.getElementById(this.svgId);
         const placeholder = container.querySelector('.chart-placeholder');
 
         if (this.data.length === 0) {
-            console.log('No data, showing placeholder');
             svgElement.classList.remove('visible');
             if (placeholder) placeholder.style.display = 'block';
             return;
@@ -253,12 +250,9 @@ class EpiCurveChart {
 
         // Bin and process data
         const bins = this.binData(this.data);
-        console.log('Bins created:', bins.length);
         const processedData = this.processStackedData(bins);
-        console.log('Processed data:', processedData.length);
 
         if (processedData.length === 0) {
-            console.log('No processed data, showing placeholder');
             svgElement.classList.remove('visible');
             if (placeholder) placeholder.style.display = 'block';
             return;
