@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epi Curve Builder</title>
+    <meta name="description" content="Build professional epidemiological curves for outbreak investigations">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Epi Curve Builder</h1>
+            <p class="subtitle">Create professional epidemiological curves for outbreak investigations</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="app-container">
+            <!-- Left Panel: Data Entry & Settings -->
+            <aside class="sidebar">
+                <!-- Data Input Section -->
+                <section class="panel" id="data-input-panel">
+                    <h2>Case Data</h2>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="manual">Manual Entry</button>
+                        <button class="tab-btn" data-tab="csv">CSV Upload</button>
+                        <button class="tab-btn" data-tab="paste">Paste Data</button>
+                    </div>
+
+                    <!-- Manual Entry Tab -->
+                    <div class="tab-content active" id="manual-tab">
+                        <form id="case-form">
+                            <div class="form-group">
+                                <label for="case-id">Case ID</label>
+                                <input type="text" id="case-id" placeholder="Auto-generated if blank">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="onset-date">Onset Date <span class="required">*</span></label>
+                                    <input type="date" id="onset-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="onset-time">Time (optional)</label>
+                                    <input type="time" id="onset-time">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="classification">Classification</label>
+                                <select id="classification">
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="probable">Probable</option>
+                                    <option value="suspected">Suspected</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="age">Age</label>
+                                    <input type="number" id="age" min="0" max="120">
+                                </div>
+                                <div class="form-group">
+                                    <label for="age-group">Age Group</label>
+                                    <select id="age-group">
+                                        <option value="">Select...</option>
+                                        <option value="0-4">0-4</option>
+                                        <option value="5-14">5-14</option>
+                                        <option value="15-24">15-24</option>
+                                        <option value="25-44">25-44</option>
+                                        <option value="45-64">45-64</option>
+                                        <option value="65+">65+</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sex">Sex</label>
+                                <select id="sex">
+                                    <option value="">Select...</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                    <option value="unknown">Unknown</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="outcome">Outcome</label>
+                                <select id="outcome">
+                                    <option value="">Select...</option>
+                                    <option value="alive">Alive</option>
+                                    <option value="deceased">Deceased</option>
+                                    <option value="unknown">Unknown</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="custom-field">Custom Category</label>
+                                <input type="text" id="custom-field" placeholder="e.g., Ward A, Cohort 1">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Add Case</button>
+                        </form>
+                    </div>
+
+                    <!-- CSV Upload Tab -->
+                    <div class="tab-content" id="csv-tab">
+                        <div class="upload-area" id="csv-drop-zone">
+                            <div class="upload-icon">📁</div>
+                            <p>Drag & drop CSV file here</p>
+                            <p class="text-muted">or</p>
+                            <input type="file" id="csv-file" accept=".csv" hidden>
+                            <button class="btn btn-secondary" onclick="document.getElementById('csv-file').click()">Browse Files</button>
+                        </div>
+                        <div class="csv-mapping" id="csv-mapping" style="display: none;">
+                            <h3>Map CSV Columns</h3>
+                            <div id="column-mapping"></div>
+                            <button class="btn btn-primary" id="import-csv-btn">Import Data</button>
+                        </div>
+                        <div class="csv-template">
+                            <p class="text-muted">Need a template?</p>
+                            <button class="btn btn-link" id="download-template">Download CSV Template</button>
+                        </div>
+                    </div>
+
+                    <!-- Paste Data Tab -->
+                    <div class="tab-content" id="paste-tab">
+                        <div class="form-group">
+                            <label for="paste-area">Paste data from spreadsheet</label>
+                            <textarea id="paste-area" rows="10" placeholder="Paste tab-separated or comma-separated data here. Include headers in first row."></textarea>
+                        </div>
+                        <button class="btn btn-primary" id="parse-paste-btn">Parse Data</button>
+                        <div class="paste-mapping" id="paste-mapping" style="display: none;">
+                            <h3>Map Columns</h3>
+                            <div id="paste-column-mapping"></div>
+                            <button class="btn btn-primary" id="import-paste-btn">Import Data</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Case List -->
+                <section class="panel" id="case-list-panel">
+                    <div class="panel-header">
+                        <h2>Case List</h2>
+                        <span class="case-count" id="case-count">0 cases</span>
+                    </div>
+                    <div class="case-list-controls">
+                        <button class="btn btn-small btn-danger" id="clear-all-btn" disabled>Clear All</button>
+                    </div>
+                    <div class="case-list" id="case-list">
+                        <p class="empty-state">No cases added yet</p>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- Center: Chart Area -->
+            <div class="chart-area">
+                <!-- Chart Settings Bar -->
+                <div class="chart-settings">
+                    <div class="settings-group">
+                        <label for="bin-size">Bin Size</label>
+                        <select id="bin-size">
+                            <option value="hour">Hourly</option>
+                            <option value="6hour">6 Hours</option>
+                            <option value="12hour">12 Hours</option>
+                            <option value="day" selected>Daily</option>
+                            <option value="week-cdc">Weekly (CDC/MMWR)</option>
+                            <option value="week-iso">Weekly (ISO)</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-group">
+                        <label for="stratify-by">Stratify By</label>
+                        <select id="stratify-by">
+                            <option value="none">None</option>
+                            <option value="classification">Classification</option>
+                            <option value="sex">Sex</option>
+                            <option value="ageGroup">Age Group</option>
+                            <option value="outcome">Outcome</option>
+                            <option value="custom">Custom Category</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-group">
+                        <label for="chart-title">Chart Title</label>
+                        <input type="text" id="chart-title" placeholder="Epi Curve">
+                    </div>
+                </div>
+
+                <!-- Main Chart -->
+                <div class="chart-container" id="chart-container">
+                    <div class="chart-placeholder">
+                        <div class="placeholder-icon">📊</div>
+                        <p>Add case data to generate epi curve</p>
+                    </div>
+                    <svg id="epi-curve"></svg>
+                </div>
+
+                <!-- Chart Legend -->
+                <div class="chart-legend" id="chart-legend"></div>
+
+                <!-- Export Buttons -->
+                <div class="export-bar">
+                    <button class="btn btn-secondary" id="export-png" disabled>
+                        <span class="btn-icon">🖼️</span> Export PNG
+                    </button>
+                    <button class="btn btn-secondary" id="export-svg" disabled>
+                        <span class="btn-icon">📐</span> Export SVG
+                    </button>
+                    <button class="btn btn-secondary" id="export-csv" disabled>
+                        <span class="btn-icon">📄</span> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Annotations & Settings -->
+            <aside class="sidebar sidebar-right">
+                <!-- Annotations Section -->
+                <section class="panel" id="annotations-panel">
+                    <h2>Annotations</h2>
+
+                    <!-- First Case -->
+                    <div class="annotation-group">
+                        <div class="annotation-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-first-case">
+                                <span>Mark First Case</span>
+                            </label>
+                        </div>
+                        <p class="annotation-desc">Automatically marks the earliest onset date</p>
+                    </div>
+
+                    <!-- Suspected Exposure -->
+                    <div class="annotation-group">
+                        <div class="annotation-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-exposure">
+                                <span>Suspected Exposure/Event</span>
+                            </label>
+                        </div>
+                        <div class="annotation-fields" id="exposure-fields" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="exposure-date">Date</label>
+                                    <input type="date" id="exposure-date">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exposure-time">Time</label>
+                                    <input type="time" id="exposure-time">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="exposure-label">Label</label>
+                                <input type="text" id="exposure-label" placeholder="e.g., Wedding reception">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intervention Markers -->
+                    <div class="annotation-group">
+                        <div class="annotation-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-interventions">
+                                <span>Intervention Markers</span>
+                            </label>
+                        </div>
+                        <div class="annotation-fields" id="intervention-fields" style="display: none;">
+                            <div id="intervention-list"></div>
+                            <button class="btn btn-small btn-secondary" id="add-intervention-btn">+ Add Intervention</button>
+                        </div>
+                    </div>
+
+                    <!-- Incubation Period -->
+                    <div class="annotation-group">
+                        <div class="annotation-header">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-incubation">
+                                <span>Incubation Period</span>
+                            </label>
+                        </div>
+                        <div class="annotation-fields" id="incubation-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="pathogen-select">Select Pathogen</label>
+                                <select id="pathogen-select">
+                                    <option value="">-- Select or enter custom --</option>
+                                    <optgroup label="Bacterial">
+                                        <option value="salmonella">Salmonella (6-72 hours)</option>
+                                        <option value="ecoli">E. coli O157:H7 (1-10 days)</option>
+                                        <option value="campylobacter">Campylobacter (2-5 days)</option>
+                                        <option value="shigella">Shigella (1-3 days)</option>
+                                        <option value="listeria">Listeria (3-70 days)</option>
+                                        <option value="cholera">Cholera (few hours-5 days)</option>
+                                        <option value="typhoid">Typhoid (6-30 days)</option>
+                                        <option value="legionella">Legionella (2-10 days)</option>
+                                    </optgroup>
+                                    <optgroup label="Viral">
+                                        <option value="norovirus">Norovirus (12-48 hours)</option>
+                                        <option value="rotavirus">Rotavirus (1-3 days)</option>
+                                        <option value="hepatitisA">Hepatitis A (15-50 days)</option>
+                                        <option value="hepatitisE">Hepatitis E (15-64 days)</option>
+                                        <option value="influenza">Influenza (1-4 days)</option>
+                                        <option value="covid19">COVID-19 (2-14 days)</option>
+                                        <option value="measles">Measles (7-21 days)</option>
+                                        <option value="mumps">Mumps (12-25 days)</option>
+                                        <option value="rubella">Rubella (14-21 days)</option>
+                                        <option value="varicella">Varicella (10-21 days)</option>
+                                        <option value="dengue">Dengue (3-14 days)</option>
+                                        <option value="ebola">Ebola (2-21 days)</option>
+                                    </optgroup>
+                                    <optgroup label="Parasitic">
+                                        <option value="giardia">Giardia (1-3 weeks)</option>
+                                        <option value="cryptosporidium">Cryptosporidium (2-10 days)</option>
+                                        <option value="cyclospora">Cyclospora (1-2 weeks)</option>
+                                    </optgroup>
+                                    <optgroup label="Toxins">
+                                        <option value="staph">Staph aureus toxin (30min-8 hours)</option>
+                                        <option value="bacillus">Bacillus cereus (1-16 hours)</option>
+                                        <option value="ciguatera">Ciguatera (1-24 hours)</option>
+                                        <option value="scombroid">Scombroid (few min-2 hours)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="incubation-min">Min (hours)</label>
+                                    <input type="number" id="incubation-min" min="0" step="0.5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="incubation-max">Max (hours)</label>
+                                    <input type="number" id="incubation-max" min="0" step="0.5">
+                                </div>
+                            </div>
+                            <p class="text-muted" id="incubation-hint">Suggested bin size: <span id="suggested-bin">-</span></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Display Options -->
+                <section class="panel" id="display-panel">
+                    <h2>Display Options</h2>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-grid" checked>
+                            <span>Show Grid Lines</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-counts" checked>
+                            <span>Show Case Counts on Bars</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="color-scheme">Color Scheme</label>
+                        <select id="color-scheme">
+                            <option value="default">Default (Blue)</option>
+                            <option value="classification">By Classification</option>
+                            <option value="colorblind">Colorblind-friendly</option>
+                            <option value="grayscale">Grayscale</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="x-axis-label">X-Axis Label</label>
+                        <input type="text" id="x-axis-label" value="Date of Symptom Onset">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="y-axis-label">Y-Axis Label</label>
+                        <input type="text" id="y-axis-label" value="Number of Cases">
+                    </div>
+                </section>
+
+                <!-- Pathogen Reference -->
+                <section class="panel collapsible" id="pathogen-panel">
+                    <h2 class="collapsible-header">
+                        Pathogen Reference
+                        <span class="collapse-icon">▼</span>
+                    </h2>
+                    <div class="collapsible-content" id="pathogen-reference">
+                        <input type="text" id="pathogen-search" placeholder="Search pathogens...">
+                        <div id="pathogen-list"></div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </main>
+
+    <footer>
+        <p>Epi Curve Builder | For educational and public health use</p>
+    </footer>
+
+    <!-- Intervention Modal Template -->
+    <template id="intervention-template">
+        <div class="intervention-item">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" class="intervention-date">
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time" class="intervention-time">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Label</label>
+                <input type="text" class="intervention-label" placeholder="e.g., Vaccination started">
+            </div>
+            <button class="btn btn-small btn-danger remove-intervention">Remove</button>
+        </div>
+    </template>
+
+    <script src="js/pathogens.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
