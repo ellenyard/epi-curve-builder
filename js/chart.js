@@ -103,6 +103,22 @@ class EpiCurveChart {
         }
     }
 
+    // Get step duration in milliseconds for the current bin size
+    getBinStepMs() {
+        const HOUR = 60 * 60 * 1000;
+        const DAY = 24 * HOUR;
+
+        switch (this.config.binSize) {
+            case 'hour': return HOUR;
+            case '6hour': return 6 * HOUR;
+            case '12hour': return 12 * HOUR;
+            case 'day': return DAY;
+            case 'week-cdc':
+            case 'week-iso': return 7 * DAY;
+            default: return DAY;
+        }
+    }
+
     // Bin the data
     binData(cases) {
         if (cases.length === 0) return [];
@@ -111,15 +127,16 @@ class EpiCurveChart {
         if (validCases.length === 0) return [];
 
         const interval = this.getBinInterval();
+        const stepMs = this.getBinStepMs();
 
         // Get date range with padding
         const dates = validCases.map(c => c.onsetDateTime);
         let minDate = d3.min(dates);
         let maxDate = d3.max(dates);
 
-        // Add padding
-        minDate = interval.floor(new Date(minDate.getTime() - interval.step()));
-        maxDate = interval.ceil(new Date(maxDate.getTime() + interval.step()));
+        // Add padding (one step before and after)
+        minDate = interval.floor(new Date(minDate.getTime() - stepMs));
+        maxDate = interval.ceil(new Date(maxDate.getTime() + stepMs));
 
         // Create bins
         const bins = d3.bin()
@@ -197,11 +214,14 @@ class EpiCurveChart {
 
     // Render the chart
     render() {
+        console.log('render() called, data length:', this.data.length);
+
         const container = document.getElementById(this.containerId);
         const svgElement = document.getElementById(this.svgId);
         const placeholder = container.querySelector('.chart-placeholder');
 
         if (this.data.length === 0) {
+            console.log('No data, showing placeholder');
             svgElement.classList.remove('visible');
             if (placeholder) placeholder.style.display = 'block';
             return;
@@ -233,9 +253,12 @@ class EpiCurveChart {
 
         // Bin and process data
         const bins = this.binData(this.data);
+        console.log('Bins created:', bins.length);
         const processedData = this.processStackedData(bins);
+        console.log('Processed data:', processedData.length);
 
         if (processedData.length === 0) {
+            console.log('No processed data, showing placeholder');
             svgElement.classList.remove('visible');
             if (placeholder) placeholder.style.display = 'block';
             return;
